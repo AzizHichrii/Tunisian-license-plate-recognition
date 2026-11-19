@@ -1,0 +1,57 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Data (tracked later with DVC, not git)
+/data/*
+!/data/*.dvc
+
+# Models & experiments
+models/
+runs/
+mlruns/
+mlartifacts/
+*.pt
+*.pth
+*.onnx
+
+# Secrets
+.env
+
+# Frontend
+node_modules/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Data (tracked later with DVC, not git)
+/data/*
+!/data/*.dvc
+
+# Models & experiments
+models/
+runs/
+mlruns/
+mlartifacts/
+*.pt
+*.pth
+*.onnx
+
+# Secrets
+.env
+
+# Frontend
+node_modules/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
