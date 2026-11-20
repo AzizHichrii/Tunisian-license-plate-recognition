@@ -40,21 +40,24 @@ def evaluate(model, loader, ctc):
 
 def main(cfg_path: str = "configs/ocr.yaml") -> None:
     cfg = yaml.safe_load(Path(cfg_path).read_text())
+    cfg.setdefault("seq_len", 32)
     set_seed(cfg["seed"])
-    out = Path(cfg["out_dir"]); out.mkdir(parents=True, exist_ok=True)
+    cfg.setdefault("strong_aug", False)
+    run_name = f"crnn_h{cfg['hidden']}_seq{cfg['seq_len']}" + ("_strongaug" if cfg["strong_aug"] else "")
+    out = Path(cfg["out_dir"]) / run_name
+    out.mkdir(parents=True, exist_ok=True)
 
-    train_dl = DataLoader(PlateDataset("train", train=True), batch_size=cfg["batch"],
+    train_dl = DataLoader(PlateDataset("train", train=True, strong_aug=cfg["strong_aug"]), batch_size=cfg["batch"],
                           shuffle=True, collate_fn=collate)
     val_dl = DataLoader(PlateDataset("val"), batch_size=cfg["batch"], collate_fn=collate)
 
-    model = CRNN(hidden=cfg["hidden"]).to(DEVICE)
+    model = CRNN(hidden=cfg["hidden"], seq_len=cfg["seq_len"]).to(DEVICE)  
     ctc = nn.CTCLoss(blank=0, zero_infinity=True)
     opt = torch.optim.AdamW(model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
-    sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, mode="max", factor=0.5, patience=5)
-
+    sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, mode="min", factor=0.5, patience=5)
     mlflow.set_tracking_uri(MLFLOW_URI)
     mlflow.set_experiment(cfg["experiment"])
-    with mlflow.start_run(run_name=f"crnn_h{cfg['hidden']}_bs{cfg['batch']}"):
+    with mlflow.start_run(run_name=run_name):
         mlflow.log_params({**cfg, "git_commit": git_commit(), "data_md5": data_version(),
                            "params_M": round(sum(p.numel() for p in model.parameters()) / 1e6, 2)})
 
@@ -74,7 +77,7 @@ def main(cfg_path: str = "configs/ocr.yaml") -> None:
 
             val_loss, preds, targets = evaluate(model, val_dl, ctc)
             em, c = exact_match(preds, targets), cer(preds, targets)
-            sched.step(em)
+            sched.step(val_loss)
             mlflow.log_metrics({"train_loss": float(np.mean(train_losses)), "val_loss": val_loss,
                                 "val_exact_match": em, "val_CER": c,
                                 "lr": opt.param_groups[0]["lr"]}, step=epoch)

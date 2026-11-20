@@ -26,3 +26,11 @@ Config: imgsz 640, 50 epochs, batch 8, patience 15, seed 42, RTX 3050 4 GB.
 
 **Selected: yolo11n** — best recall and box precision (mAP50-95). Speed difference negligible.
 Note: differences ~0.01 on 125 val images may be partly noise.
+## OCR — val set (130 crops)
+| Model | Exact match | CER | Notes |
+|---|---|---|---|
+| EasyOCR (en, digits allowlist) | 0.146 | 0.440 | Arabic word تونس read as random digits; 80/130 read as one block |
+| CRNN v1 (LR sched on EM, seq32) | 0.746 | 0.100 | LR collapsed while EM=0 at start |
+| CRNN seq64 (LR sched on EM) | 0.000 | 0.755 | Failed: LR -> 0 before CTC alignment |
+| CRNN v2 (LR sched on val loss, seq32) | 0.808 | 0.080 | Scheduler fix: +6.2 pts |
+| **CRNN v3 (LR sched on val loss, seq64)** | **0.862** | **0.051** | 64 time steps: +5.4 pts, fewer lost repeated digits |

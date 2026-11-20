@@ -45,6 +45,29 @@ def preprocess(img: np.ndarray) -> np.ndarray:
     return canvas.astype(np.float32) / 127.5 - 1.0
 
 
+def augment_strong(img: np.ndarray) -> np.ndarray:
+    """Stronger augmentation: perspective, larger tilt, noise, partial occlusion."""
+    img = augment(img)
+    h, w = img.shape[:2]
+    if random.random() < 0.5:                                        # perspective (camera angle)
+        d = 0.08
+        src = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
+        dst = np.float32([[random.uniform(0, d) * w, random.uniform(0, d) * h],
+                          [w - random.uniform(0, d) * w, random.uniform(0, d) * h],
+                          [w - random.uniform(0, d) * w, h - random.uniform(0, d) * h],
+                          [random.uniform(0, d) * w, h - random.uniform(0, d) * h]])
+        img = cv2.warpPerspective(img, cv2.getPerspectiveTransform(src, dst), (w, h),
+                                  borderMode=cv2.BORDER_REPLICATE)
+    if random.random() < 0.3:                                        # sensor noise
+        noise = np.random.normal(0, 12, img.shape)
+        img = np.clip(img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
+    if random.random() < 0.3:                                        # downscale/upscale (low resolution)
+        f = random.uniform(0.4, 0.8)
+        small = cv2.resize(img, (max(1, int(w * f)), max(1, int(h * f))))
+        img = cv2.resize(small, (w, h))
+    return img
+
+
 def augment(img: np.ndarray) -> np.ndarray:
     """Light, realistic augmentation (train only). Never flip: text would mirror."""
     alpha, beta = random.uniform(0.7, 1.3), random.uniform(-30, 30)
@@ -59,10 +82,11 @@ def augment(img: np.ndarray) -> np.ndarray:
 
 
 class PlateDataset(Dataset):
-    def __init__(self, split: str, train: bool = False):
+    def __init__(self, split: str, train: bool = False, strong_aug: bool = False):
         df = pd.read_csv(SPLITS, dtype={"text": str})
         self.df = df[df.split == split].reset_index(drop=True)
         self.train = train
+        self.strong_aug = strong_aug
 
     def __len__(self) -> int:
         return len(self.df)
@@ -71,7 +95,7 @@ class PlateDataset(Dataset):
         row = self.df.iloc[i]
         img = cv2.imread(str(IMG_DIR / row.img_id))
         if self.train:
-            img = augment(img)
+            img = augment_strong(img) if self.strong_aug else augment(img)
         x = torch.from_numpy(preprocess(img)).unsqueeze(0)    # (1, H, W)
         y = torch.tensor(encode(row.text), dtype=torch.long)
         return x, y, row.text
