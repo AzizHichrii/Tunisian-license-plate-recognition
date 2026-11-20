@@ -26,13 +26,12 @@ def clean_name(name: str) -> str:
     """MLflow refuses some characters: 'metrics/mAP50(B)' -> 'metrics/mAP50'."""
     return re.sub(r"[^\w\-./ ]", "", name.strip().replace("(B)", ""))
 
-
-def main(cfg_path: str, epochs: int | None) -> None:
+def main(cfg_path: str, epochs: int | None, model_name: str | None = None) -> None:
     cfg = yaml.safe_load(Path(cfg_path).read_text())
     if epochs:
         cfg["epochs"] = epochs
-    if model:
-        cfg["model"] = model    
+    if model_name:
+        cfg["model"] = model_name
     run_name = f"{Path(cfg['model']).stem}_img{cfg['imgsz']}_e{cfg['epochs']}"
 
     mlflow.set_tracking_uri(MLFLOW_URI)
@@ -64,7 +63,7 @@ def main(cfg_path: str, epochs: int | None) -> None:
         best = YOLO(save_dir / "weights" / "best.pt")
         m = best.val(data=cfg["data"], split="val", imgsz=cfg["imgsz"],
                      batch=cfg["batch"], device=cfg["device"],
-                     project=cfg["project"], name=f"{run_name}_val", exist_ok=True)
+                     project=str(Path(cfg["project"]).resolve()), name=f"{run_name}_val", exist_ok=True)
         mlflow.log_metrics({
             "val_precision": m.box.mp,
             "val_recall": m.box.mr,
@@ -89,4 +88,4 @@ if __name__ == "__main__":
     p.add_argument("--config", default="configs/detection.yaml")
     p.add_argument("--epochs", type=int, help="override epochs (quick test)")
     a = p.parse_args()
-    main(a.config, a.epochs)
+    main(a.config, a.epochs, a.model)
