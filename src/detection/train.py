@@ -31,6 +31,8 @@ def main(cfg_path: str, epochs: int | None) -> None:
     cfg = yaml.safe_load(Path(cfg_path).read_text())
     if epochs:
         cfg["epochs"] = epochs
+    if model:
+        cfg["model"] = model    
     run_name = f"{Path(cfg['model']).stem}_img{cfg['imgsz']}_e{cfg['epochs']}"
 
     mlflow.set_tracking_uri(MLFLOW_URI)
@@ -46,7 +48,7 @@ def main(cfg_path: str, epochs: int | None) -> None:
             data=cfg["data"], imgsz=cfg["imgsz"], epochs=cfg["epochs"],
             batch=cfg["batch"], patience=cfg["patience"], seed=cfg["seed"],
             device=cfg["device"], workers=cfg["workers"],
-            project=cfg["project"], name=run_name, exist_ok=True,
+            project=str(Path(cfg["project"]).resolve()), name=run_name, exist_ok=True,
         )
         save_dir = Path(model.trainer.save_dir)
 
@@ -83,6 +85,7 @@ def main(cfg_path: str, epochs: int | None) -> None:
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
+    p.add_argument("--model", help="override model, e.g. yolo11n.pt")
     p.add_argument("--config", default="configs/detection.yaml")
     p.add_argument("--epochs", type=int, help="override epochs (quick test)")
     a = p.parse_args()
