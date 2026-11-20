@@ -44,6 +44,8 @@ mlartifacts/
 *.pt
 *.pth
 *.onnx
+mlflow.db
+mlartifacts/
 
 # Secrets
 .env
