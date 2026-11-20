@@ -7,3 +7,7 @@ imagehash
 tqdm
 jupyter
 dvc
+# Deep learning (install torch first: see README)
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+ultralytics
+mlflow
