@@ -34,3 +34,12 @@ Note: differences ~0.01 on 125 val images may be partly noise.
 | CRNN seq64 (LR sched on EM) | 0.000 | 0.755 | Failed: LR -> 0 before CTC alignment |
 | CRNN v2 (LR sched on val loss, seq32) | 0.808 | 0.080 | Scheduler fix: +6.2 pts |
 | **CRNN v3 (LR sched on val loss, seq64)** | **0.862** | **0.051** | 64 time steps: +5.4 pts, fewer lost repeated digits |
+
+**Selected: CRNN v3 (seq64)** — exact match 0.862, CER 0.051, ~1 ms/plate. Weights: `models/ocr/crnn_v3_seq64.pt` (MLflow run `678b5f15`).
+Experiment B (strong augmentation) implemented but not run.
+
+## Selected models (pipeline)
+| Stage | Model | File |
+|---|---|---|
+| Detection | yolo11n (val mAP50-95 0.801, recall 0.984) | `models/detection/yolo11n_best.pt` |
+| OCR | CRNN v3 seq64 (val exact match 0.862, CER 0.051) | `models/ocr/crnn_v3_seq64.pt` |
