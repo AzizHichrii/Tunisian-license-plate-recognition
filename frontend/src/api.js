@@ -14,3 +14,8 @@ export async function predict(file) {
   if (!res.ok) throw new Error(data.detail ?? `Server error (${res.status})`);
   return data;
 }
+export async function getHealth() {
+  const res = await fetch(`${API_URL}/health`);
+  if (!res.ok) throw new Error("API not ready");
+  return res.json();
+}
