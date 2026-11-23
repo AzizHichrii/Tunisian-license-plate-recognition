@@ -43,3 +43,17 @@ Experiment B (strong augmentation) implemented but not run.
 |---|---|---|
 | Detection | yolo11n (val mAP50-95 0.801, recall 0.984) | `models/detection/yolo11n_best.pt` |
 | OCR | CRNN v3 seq64 (val exact match 0.862, CER 0.051) | `models/ocr/crnn_v3_seq64.pt` |
+## Final evaluation — TEST set (run once)
+| Stage | Metric | Val | Test |
+|---|---|---|---|
+| Detection (yolo11n, 124 img) | Precision | 0.998 | 0.998 |
+| | Recall | 0.984 | 0.976 |
+| | mAP50 | 0.994 | 0.994 |
+| | mAP50-95 | 0.801 | 0.757 |
+| OCR (CRNN v3, 133 crops) | Exact match | 0.862 | 0.865 |
+| | CER | 0.051 | 0.041 |
+| | Valid format rate | — | 0.970 |
+
+- Confidence is useful: 52% of plates have conf ≥ 0.9, with 95.7% exact match (≈77% below 0.9) → flag "uncertain" under 0.9.
+- End-to-end score not measurable: detection images have no plate text labels.
+- Pipeline latency: ~60 ms/image on RTX 3050 after warm-up (first call ~9 s).
