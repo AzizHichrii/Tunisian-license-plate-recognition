@@ -46,6 +46,7 @@ mlartifacts/
 *.onnx
 mlflow.db
 mlartifacts/
+.pytest_cache
 
 # Secrets
 .env
