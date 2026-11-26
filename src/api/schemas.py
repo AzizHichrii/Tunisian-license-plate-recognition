@@ -1,4 +1,5 @@
 """JSON response shapes. FastAPI uses them for validation + Swagger docs."""
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -56,3 +57,44 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserOut
+
+
+class FeedbackCreate(BaseModel):
+    rating: int = Field(ge=1, le=5)
+    text: str = Field(min_length=3, max_length=1000)
+
+
+class FeedbackOut(BaseModel):
+    id: int
+    rating: int
+    text: str
+    username: str
+    created_at: datetime
+
+
+class FeedbackList(BaseModel):
+    count: int
+    average: float | None
+    items: list[FeedbackOut]
+
+
+class ValleyRequest(BaseModel):
+    question: str = Field(min_length=2, max_length=1000)
+
+
+class ValleySource(BaseModel):
+    n: int
+    title: str
+    section: str | None
+    page: int | None
+    source: str
+    date: str
+    score: float
+
+
+class ValleyResponse(BaseModel):
+    answer: str
+    language: str
+    model: str
+    sources: list[ValleySource]
+    timings_ms: dict[str, int]

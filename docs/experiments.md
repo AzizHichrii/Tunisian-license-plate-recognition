@@ -57,3 +57,15 @@ Experiment B (strong augmentation) implemented but not run.
 - Confidence is useful: 52% of plates have conf ≥ 0.9, with 95.7% exact match (≈77% below 0.9) → flag "uncertain" under 0.9.
 - End-to-end score not measurable: detection images have no plate text labels.
 - Pipeline latency: ~60 ms/image on RTX 3050 after warm-up (first call ~9 s).
+## Valley RAG
+- Corpus: 32 docs (3 Tunisian law PDFs, 29 Wikipedia EN) → 2,437 chunks → bge-m3 embeddings → pgvector (HNSW)
+- Pipeline: query rewrite (FR legal + EN technical) → 3 searches → Reciprocal Rank Fusion → top 6 → Gemini answer with citations
+
+| Answer model | Avg time | Notes |
+|---|---|---|
+| gemini-3.5-flash | — | never answered: unavailable on free tier (100% fallback to 2.5-flash) |
+| gemini-2.5-flash (fallback) | 32.6 s | good quality |
+| **gemini-3.1-flash-lite** | **~2–4 s warm** | same or better quality → **selected** |
+
+- Score-sorted merge lost Décret 2000-142 Art.19 (permit question) → fixed by RRF.
+- Known data gap: red-light fine amount not in corpus (rule exists in Décret 2000-150).
