@@ -17,3 +17,5 @@ python-multipart
 sentence-transformers
 psycopg[binary]
 pgvector
+google-genai
+python-dotenv
