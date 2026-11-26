@@ -1,7 +1,7 @@
 """JSON response shapes. FastAPI uses them for validation + Swagger docs."""
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class PlateDetection(BaseModel):
@@ -33,3 +33,26 @@ class HealthResponse(BaseModel):
     status: Literal["ok", "loading"]
     models_loaded: bool
     device: str
+
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    username: str = Field(min_length=3, max_length=50)
+    password: str = Field(min_length=8, max_length=72)   # bcrypt uses at most 72 bytes
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)   # build it directly from a SQLAlchemy User
+    id: int
+    email: EmailStr
+    username: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut
