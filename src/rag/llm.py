@@ -10,7 +10,7 @@ from google.genai import errors, types
 load_dotenv()
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
 FALLBACKS = [m.strip() for m in os.getenv("GEMINI_FALLBACKS", "").split(",") if m.strip()]
-RETRYABLE = {429, 500, 503}   # quota reached / server error / overloaded
+RETRYABLE = {429, 500, 503, 504}   # quota reached / server error / overloaded
 
 
 @lru_cache(maxsize=1)
@@ -18,7 +18,13 @@ def get_client() -> genai.Client:
     key = os.getenv("GEMINI_API_KEY")
     if not key:
         raise RuntimeError("GEMINI_API_KEY is missing: add it to the .env file")
-    return genai.Client(api_key=key)
+    return genai.Client(
+        api_key=key,
+        http_options=types.HttpOptions(
+            timeout=60_000,                                   # 30 s max per request (in ms)
+            retry_options=types.HttpRetryOptions(attempts=1), # no hidden retries: we do our own
+        ),
+    )
 
 
 def generate(prompt: str, system: str | None = None, temperature: float = 0.2,
@@ -36,6 +42,9 @@ def generate(prompt: str, system: str | None = None, temperature: float = 0.2,
                 if e.code not in RETRYABLE:
                     raise                      # real error (bad key, bad request): stop
                 time.sleep(2 ** attempt)       # 1s, 2s, 4s… then next attempt
+            except Exception as e:             # timeout / network error: try again, then next model
+                last_error = e
+                time.sleep(2 ** attempt)
     raise RuntimeError(f"All Gemini models are unavailable right now: {last_error}")
 
 
