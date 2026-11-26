@@ -21,18 +21,18 @@ def get_client() -> genai.Client:
     return genai.Client(
         api_key=key,
         http_options=types.HttpOptions(
-            timeout=60_000,                                   # 30 s max per request (in ms)
+            api_version="v1beta",                             # needed for system instructions
+            timeout=60_000,                                   # 60 s max per request (in ms)
             retry_options=types.HttpRetryOptions(attempts=1), # no hidden retries: we do our own
         ),
     )
 
-
 def generate(prompt: str, system: str | None = None, temperature: float = 0.2,
-             retries: int = 2) -> tuple[str, str]:
+             retries: int = 2, model: str | None = None) -> tuple[str, str]:
     """Return (answer, model_used). Tries the main model, then the fallbacks."""
     config = types.GenerateContentConfig(system_instruction=system, temperature=temperature)
     last_error = None
-    for model in [GEMINI_MODEL, *FALLBACKS]:
+    for model in [model or GEMINI_MODEL, *FALLBACKS]:
         for attempt in range(retries + 1):
             try:
                 r = get_client().models.generate_content(model=model, contents=prompt, config=config)
