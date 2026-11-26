@@ -19,3 +19,7 @@ psycopg[binary]
 pgvector
 google-genai
 python-dotenv
+sqlalchemy
+bcrypt
+pyjwt
+pydantic[email]
